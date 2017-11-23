@@ -1,3 +1,8 @@
+#ifndef _INIT_H_
+#define _INIT_H_
+
+void Init(void);
+
 void Init(void)
 {
    
@@ -5,3 +10,6 @@ void Init(void)
     //…
     // initialize thread scheduler  
 }
+#endif
+
+

@@ -1,7 +1,7 @@
 //포인터로 구현한 큐
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+//#include <string.h>
 typedef struct LinkedQueueNodeType
 {
 	int data;
