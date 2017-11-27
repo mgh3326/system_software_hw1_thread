@@ -56,6 +56,8 @@ int main(void)
   enqueue(s, 11);
   enqueue(s, 12);
   enqueue(s, 13);
+    enqueue(s, 12);
+
   print_queue(s);
   printf("dequeue test : %d \n",peek(s));//출력값은 성공값만 나오나보네
   dequeue(s);
@@ -63,7 +65,6 @@ int main(void)
   dequeue_anywhere(s,12);
   printf("\n\n----------------------------\n");
   print_queue(s);
- 
   /*
   dequeue(s);
   printf("\n\n----------------------------\n");
@@ -205,7 +206,7 @@ int dequeue_anywhere(struct dlqlist*s , int numd)
     {
       if(numd == p->num)
         {
-          remove_element(s,p);
+          remove_element(s,p);//_2로 해도 되네
         }
     }
       ret = VAL_SUCC;
