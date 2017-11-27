@@ -9,14 +9,16 @@
 
 int 	thread_create(thread_t *thread, thread_attr_t *attr, void *(*start_routine) (void *), void *arg)
 {
-    Thread temp;
-    thread_t tid=thread_self();
+    //Thread temp;
+    thread_t tid=*thread;
     //temp.status = 1;
     // pthread_cond_t readyCond;
    	// bRunnable =0;
    	// pthread_mutex_t	readyMutex;
-       	Ready_enqueue(tid);
-    return pthread_create(thread,attr,start_routine,arg);//제어의 새로운 흐름을 만듦
+    thread_t a = pthread_create(thread,attr,start_routine,arg);//제어의 새로운 흐름을 만듦
+           	//printf("\ntest test : %d\n",*thread);
+                 Ready_enqueue(*thread);
+
 }
 
 
@@ -63,7 +65,7 @@ int Ready_enqueue(thread_t i)
     }
       else
     {
-      p->status=0;
+      p->status=THREAD_STATUS_RUN;//status
       p->tid = i;
       p->pPrev = p->pNext = NULL;
  
@@ -156,10 +158,10 @@ void Ready_print_queue()
   else
     {
       struct _Thread* p = ReadyQHead;
-      printf("ReadyQoutput: ");      
+      printf("ReadyQoutput\n");      
       while(p)
     {
-      printf("%u ", (unsigned int)p->tid);
+      printf("tid : %u status: %d\n", (unsigned int)p->tid,p->status);
       p = p->pNext;
     }
     printf("\n");

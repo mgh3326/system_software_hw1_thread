@@ -48,6 +48,7 @@ int main(void)
 }
 void* AppTask(void *arg)
 {
+    //Ready_enqueue(thread_self());
     while(1);
     return((void *)0);
 
