@@ -1,3 +1,4 @@
+//이거 c파일로 해야됨
 void* foo1(void* arg)
 {
     //….

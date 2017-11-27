@@ -227,8 +227,9 @@ int Ready_dequeue(struct dlqlist* s)
       else
     {
       ReadyQHead = ReadyQHead->pNext;
+       //ReadyQHead->pNext->pPrev=NULL;//형린이랑 추가함
     }
- 
+
       free(p);
       ret = VAL_SUCC;
     }

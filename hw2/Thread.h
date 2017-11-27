@@ -42,7 +42,7 @@ Thread*		ReadyQTail;
 
 /* head and tail pointers for waiting queue */
 Thread*		WaitQHead;
-Thread*		WaitQTai;
+Thread*		WaitQTail;
 
 
 int thread_create(thread_t *thread, thread_attr_t *attr, void *(*start_routine) (void *), void *arg);
@@ -51,6 +51,8 @@ int thread_suspend(thread_t tid);
 int	thread_resume(thread_t tid);
 thread_t thread_self();
 //여기 부터 추가
-
+int Ready_enqueue(pthread_t i);
+int Ready_dequeue();
+void Ready_print_queue();
 //여기 까지 추가
 #endif /* __THREAD_H__ */
