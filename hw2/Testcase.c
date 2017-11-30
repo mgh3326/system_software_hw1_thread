@@ -33,27 +33,28 @@ void Testcase(void)
 {
      thread_id tid1, tid2, tid3;
      int  arg1, arg2, arg3;
-    Ready_print_queue();
-    Wait_print_queue();
+    // Ready_print_queue();
+    // Wait_print_queue();
 
      thread_create(&tid1, NULL, foo1, &arg1);
      thread_create(&tid2, NULL, foo2, &arg2);
      thread_create(&tid3, NULL, foo3, &arg3);
      //…
-     printf("\n");
-     Ready_print_queue();
-     Wait_print_queue();
+    //  printf("\n");
+    //  Ready_print_queue();
+    //  Wait_print_queue();
 
-     thread_suspend(tid1);
-     thread_suspend(tid2);
+//  printf("\n");
+//      Ready_print_queue();
+//      Wait_print_queue();
+    //  thread_suspend(tid1);
+    //  thread_suspend(tid2);
+  
+    //  //…
+    //  thread_resume(tid1);
      printf("\n");
-
      Ready_print_queue();
      Wait_print_queue();
-     //…
-     thread_resume(tid1);
-     printf("\n");
-     Ready_print_queue();
-     Wait_print_queue();
+     
      while(1);
 }

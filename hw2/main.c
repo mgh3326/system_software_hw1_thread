@@ -11,12 +11,13 @@ int main(void)
 {
 	 thread_id tid1,tid2,tid3,tid4;//thread_t아닌가?
      int arg;
+     ReadyQHead=NULL;
+     ReadyQTail=NULL;
     //  Init();
-    ReadyQHead =NULL;
-    ReadyQTail=NULL;
-    thread_create(&tid1, NULL, AppTask, &arg);
-
-    sleep(1);
+    pthread_create(&tid1, NULL, AppTask, &arg);
+    //sleep(1);
+    
+    //Ready_dequeue();
 
     // Ready_print_queue();
     
@@ -32,9 +33,6 @@ int main(void)
     // sleep(1);
     // Ready_print_queue();
     // thread_suspend(tid2);
-    // Ready_print_queue();
-    // Wait_print_queue();
-
     
     // for(int i=0;i<10;i++)
     // {
@@ -48,6 +46,7 @@ int main(void)
     
     // }
     // Ready_print_queue();
+    
     RunScheduler();
      //여기부터 추가
      //printf("test\n");

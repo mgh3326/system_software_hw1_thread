@@ -7,10 +7,44 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdbool.h>
+#include <signal.h>
 #define TRUE true
 #define FALSE false
 static pthread_cond_t bcond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t bmutex = PTHREAD_MUTEX_INITIALIZER;
+void (*old_fun)( int);
+
+void *child(void *arg) {
+   printf("child\n");
+   return NULL;
+}
+
+void* __wrapperFunc(void* arg)
+{
+Ready_enqueue(thread_self());
+printf("ReadQ insert tid : %u\n",(unsigned int)thread_self());
+  void* ret;
+  WrapperArg* pArg = (WrapperArg*)arg;
+  sigset_t set;
+  int retSig;
+
+  // child sleeps until TCB is initialized
+     signal(SIGUSR1, __thread_wait_handler);//핸들러 등록
+  sigemptyset(&set);
+  sigaddset(&set, SIGUSR1);
+  sigwait(&set, &retSig);
+  // child is ready to run
+
+  __thread_wait_handler(0);//다시 재움
+  void* funcPtr = pArg->funcPtr;
+  void* funcArg = pArg->funcArg;
+  
+  ret = (*pArg->funcPtr)(pArg->funcArg);
+  
+  return ret;
+
+}
+
 int 	thread_create(thread_t *thread, thread_attr_t *attr, void *(*start_routine) (void *), void *arg)
 {
     //Thread temp;
@@ -18,9 +52,18 @@ int 	thread_create(thread_t *thread, thread_attr_t *attr, void *(*start_routine)
     // pthread_cond_t readyCond;
    	// bRunnable =0;
    	// pthread_mutex_t	readyMutex;
-    thread_t a = pthread_create(thread,attr,start_routine,arg);//제어의 새로운 흐름을 만듦
+//pthread_t c;
+   WrapperArg wrapperArg;
+   wrapperArg.funcPtr = start_routine;
+   wrapperArg.funcArg = arg;
+
+  pthread_create(thread,attr,__wrapperFunc,&wrapperArg);//제어의 새로운 흐름을 만듦
+                  //sleep(1);
+  
+sleep(1);
+        pthread_kill(*thread,SIGUSR1);//보내주자
+
            	//printf("\ntest test : %d\n",*thread);
-                 Ready_enqueue(*thread);
 
 }
 
@@ -53,14 +96,14 @@ int	thread_resume(thread_t tid)
 thread_t	thread_self()
 {
     return pthread_self();
-}	
+}
+
 //추가함
-void thread_wait_handler(int signo)
+void __thread_wait_handler(int signo)
 {
    Thread* pTh;
       // __getThread()는 tid로 linked list의 TCB를 찾아서 반환한다.
    pTh = getThread(pthread_self());// child에서 TCB가 초기화 안되었는데, 이 함수가 호출되어도 되나 ?
-
    pthread_mutex_lock(&(pTh->readyMutex));
    while (pTh->bRunnable == FALSE)
       pthread_cond_wait(&(pTh->readyCond), &(pTh->readyMutex));
@@ -95,6 +138,7 @@ int Ready_enqueue(thread_t i)
     {
       p->status=THREAD_STATUS_READY;//status
       p->tid = i;
+      p->parentTid = pthread_self();
       p->pPrev = p->pNext = NULL;
       p->readyCond = bcond;
       p->readyMutex = bmutex;
@@ -119,6 +163,8 @@ int Ready_enqueue(thread_t i)
       else
     {
       p->tid = i;
+      p->parentTid = pthread_self();
+
       p->status=THREAD_STATUS_READY;//status
       p->pPrev = p->pNext = NULL;
       p->readyCond = bcond;
@@ -192,7 +238,7 @@ void Ready_print_queue()
       printf("ReadyQoutput\n");      
       while(p)
     {
-      printf("tid : %u status: %d\n", (unsigned int)p->tid,p->status);
+      printf("tid : %u parent id : %u status: %d\n", (unsigned int)p->tid,(unsigned int)p->parentTid,p->status);
       p = p->pNext;
     }
     
@@ -218,9 +264,11 @@ int Wait_enqueue(thread_t i)
     {
       p->status=THREAD_STATUS_BLOCKED;//status
       p->tid = i;
+      p->parentTid = pthread_self();
       p->pPrev = p->pNext = NULL;
       p->readyCond = bcond;
       p->readyMutex = bmutex;
+      p->bRunnable =0;
       WaitQHead = WaitQTail = p;
       ret = 0;
     }
@@ -242,10 +290,12 @@ int Wait_enqueue(thread_t i)
       else
     {
       p->tid = i;
+      p->parentTid = pthread_self();
       p->status=THREAD_STATUS_BLOCKED;//status
       p->pPrev = p->pNext = NULL;
       p->readyCond = bcond;
       p->readyMutex = bmutex;
+      p->bRunnable =0;
       WaitQTail->pNext = p;
       p->pPrev = WaitQTail;
       WaitQTail = p;
@@ -315,7 +365,7 @@ void Wait_print_queue()
       printf("WaitQoutput\n");      
       while(p)
     {
-      printf("tid : %u status: %d\n", (unsigned int)p->tid,p->status);
+      printf("tid : %u parent id : %u status: %d\n", (unsigned int)p->tid,(unsigned int)p->parentTid,p->status);
       p = p->pNext;
     }
     
@@ -340,6 +390,7 @@ Thread* getThread(thread_t i)
     {
       if(i == p->tid)
         {
+
           return p;
         }
     }
@@ -381,7 +432,7 @@ void Ready_remove_element(struct _Thread* d)
     }
   else if((NULL == d->pNext) && d->pPrev) /* removing pTail */
     {
-     ReadyQHead = d->pPrev;
+     ReadyQTail = d->pPrev;
       d->pPrev->pNext = NULL;
     }
   else if(d->pNext && (NULL == d->pPrev)) /* removing ReadyQHead */
@@ -420,4 +471,9 @@ void Wait_remove_element(struct _Thread* d)
     }
  
   free(d);
+}
+thread_t Ready_peek()
+{
+        struct _Thread* p= ReadyQHead;
+        return p->tid;
 }

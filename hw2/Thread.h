@@ -17,6 +17,7 @@ typedef enum{
 	THREAD_STATUS_RUN = 0,
 	THREAD_STATUS_READY = 1,
 	THREAD_STATUS_BLOCKED = 2,
+	THREAD_STATUS_ZOMBIE = 3
 }ThreadStatus;
 
 typedef struct _Thread Thread;
@@ -26,6 +27,8 @@ typedef struct _Thread {
     pthread_cond_t readyCond;
    	BOOL bRunnable;
    	pthread_mutex_t	readyMutex;
+	pthread_t parentTid;
+
 	Thread*	pPrev;
 	Thread*	pNext;
 } Thread;	
@@ -36,6 +39,7 @@ typedef struct __wrapperArg {
 } WrapperArg;
 
 
+
 /* head and tail pointers for ready queue */ 
 Thread* 	ReadyQHead;
 Thread*		ReadyQTail;
@@ -44,12 +48,12 @@ Thread*		ReadyQTail;
 Thread*		WaitQHead;
 Thread*		WaitQTail;
 
-
+void* __wrapperFunc(void* arg);
 int thread_create(thread_t *thread, thread_attr_t *attr, void *(*start_routine) (void *), void *arg);
 int thread_join(thread_t thread, void **retval);
 int thread_exit(void* retval);
-int thread_suspend(thread_t tid);
-int	thread_resume(thread_t tid);
+int thread_suspend(thread_t tid);//ready -> wait
+int	thread_resume(thread_t tid);//wait -> ready
 thread_t thread_self();
 //여기 부터 추가
 int Ready_enqueue(pthread_t i);
@@ -64,5 +68,6 @@ Thread* getThread_wait(thread_t i);
 void Wait_remove_element(struct _Thread* d);
 void __thread_wait_handler(int signo);
 void __thread_wakeup(Thread* pTh);
+thread_t Ready_peek();
 //여기 까지 추가
 #endif /* __THREAD_H__ */
