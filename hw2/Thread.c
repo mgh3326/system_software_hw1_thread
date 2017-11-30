@@ -6,8 +6,7 @@
 #include<pthread.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <stdbool.h>
-#include <signal.h>
+
 #define TRUE true
 #define FALSE false
 static pthread_cond_t bcond = PTHREAD_COND_INITIALIZER;
@@ -109,13 +108,19 @@ void __thread_wait_handler(int signo)
       pthread_cond_wait(&(pTh->readyCond), &(pTh->readyMutex));
    pthread_mutex_unlock(&(pTh->readyMutex));
 }
+void thread_wait(thread_t tid)
+{
+  pthread_kill(tid, SIGUSR1);
+     printf("\nthread_wait\n");
 
-void thread_wakeup(Thread* pTh)
+}
+void __thread_wakeup(Thread* pTh)
 {
    pthread_mutex_lock(&(pTh->readyMutex));
    pTh->bRunnable = TRUE;
    pthread_cond_signal(&(pTh->readyCond));
    pthread_mutex_unlock(&(pTh->readyMutex));
+   printf("\n__thread_wakeup\n");
 }
 
 int Ready_enqueue(thread_t i)

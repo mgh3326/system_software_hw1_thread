@@ -11,6 +11,7 @@ int main(void)
 {
 	 thread_id tid1,tid2,tid3,tid4;//thread_t아닌가?
      int arg;
+     Running_Thread=NULL;
      ReadyQHead=NULL;
      ReadyQTail=NULL;
     //  Init();

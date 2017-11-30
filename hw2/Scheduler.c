@@ -5,8 +5,17 @@
 #include <stdio.h>
 int RunScheduler( void )
 {
-        printf("test");
+        //printf("test");
         //sleep(TIMESLICE);
+    while(1)
+    {
+    sleep(TIMESLICE);
+    if(NULL == ReadyQHead && NULL == ReadyQTail)
+    continue;
+    Running_Thread=ReadyQHead;
+    break;
+    }
+
 
     thread_t run_tid=0;
     thread_t current_tid=0;
@@ -25,11 +34,15 @@ int RunScheduler( void )
             Ready_dequeue();
     current_tid=Ready_peek();
     Thread* p =getThread(current_tid);
-    
     //Ready_dequeue();
         printf("run_tid : %u current_tid : %u \n",(unsigned int)run_tid,(unsigned int)current_tid);
     Ready_enqueue(run_tid);
-    //sleep(TIMESLICE);
+
+        __thread_wakeup(rp);
+
+    sleep(TIMESLICE);
+            thread_wait(run_tid);
+
     }
 }
 
@@ -38,4 +51,3 @@ void __ContextSwitch(Thread pCurThread, Thread* pNewThread)
 {
 
 }
-

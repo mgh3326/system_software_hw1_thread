@@ -8,7 +8,11 @@ typedef thread_t thread_id;//추가함
 void* foo1(void* arg)
 {
     //….
-    while(1);
+    while(1)
+    {
+     printf("foo1\n");
+        sleep(1);
+    }
     return((void *)0);
 
 }
@@ -16,14 +20,22 @@ void* foo1(void* arg)
 void* foo2(void* arg)
 {
  //….
-   while(1);
+   while(1)
+    {
+     printf("foo2\n");
+        sleep(1);
+    }
 return((void *)0);
 
 }
 void* foo3(void* arg)
 {
  //….
-   while(1);
+    while(1)
+    {
+     printf("foo3\n");
+        sleep(1);
+    }
 return((void *)0);
 
 }
@@ -37,6 +49,8 @@ void Testcase(void)
     // Wait_print_queue();
 
      thread_create(&tid1, NULL, foo1, &arg1);
+	// sleep(2);
+	 //printf("tid test : %u",(unsigned int)tid1);
      thread_create(&tid2, NULL, foo2, &arg2);
      thread_create(&tid3, NULL, foo3, &arg3);
      //…
@@ -47,14 +61,14 @@ void Testcase(void)
 //  printf("\n");
 //      Ready_print_queue();
 //      Wait_print_queue();
-    //  thread_suspend(tid1);
+     //thread_suspend(tid1);
     //  thread_suspend(tid2);
   
     //  //…
     //  thread_resume(tid1);
-     printf("\n");
-     Ready_print_queue();
-     Wait_print_queue();
+    //  printf("\n");
+    //  Ready_print_queue();
+    //  Wait_print_queue();
      
      while(1);
 }

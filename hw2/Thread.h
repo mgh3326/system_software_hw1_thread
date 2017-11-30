@@ -3,7 +3,8 @@
 #include <stdlib.h>
 
 #include <pthread.h>
-
+#include <stdbool.h>
+#include <signal.h>
 
 #define TIMESLICE	(2)
 
@@ -48,6 +49,8 @@ Thread*		ReadyQTail;
 Thread*		WaitQHead;
 Thread*		WaitQTail;
 
+Thread* 	Running_Thread;
+
 void* __wrapperFunc(void* arg);
 int thread_create(thread_t *thread, thread_attr_t *attr, void *(*start_routine) (void *), void *arg);
 int thread_join(thread_t thread, void **retval);
@@ -56,6 +59,7 @@ int thread_suspend(thread_t tid);//ready -> wait
 int	thread_resume(thread_t tid);//wait -> ready
 thread_t thread_self();
 //여기 부터 추가
+void thread_wait(thread_t tid);
 int Ready_enqueue(pthread_t i);
 int Ready_dequeue();
 void Ready_print_queue();
