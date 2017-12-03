@@ -1,74 +1,59 @@
-#include "Init.h"
-#include "Scheduler.h"
+ 
+#include <stdio.h>
+#include <unistd.h>
+#include <assert.h>
+#include <time.h>
+#include <errno.h>
 #include "Thread.h"
-#include<stdio.h>
-#include<unistd.h>
-//이거 c파일로 해야됨
-typedef thread_t thread_id;//추가함
-void* foo1(void* arg)
-{
-    //….
-    while(1)
-    {
-     printf("foo1\n");
-        sleep(1);
-    }
-    return((void *)0);
 
+#define TOTAL_THREAD_NUM (5)
+int fun1(int param);
+int fun2(int param);
+int fun2(int param);
+
+void Testcase(void);
+
+
+extern int countl;
+ 
+int Tc1ThreadProc(int param)
+{
+			//sleep(1);
+
+	int tid = 0;
+	int count = 0;
+
+	tid = thread_self();
+
+	count = 50;
+	while (count > 0)
+	{
+		/* sleep for 1 seconds */
+		sleep(1);
+		printf("Tc1ThreadProc: my thread id (%u) count is (%d)\n",thread_self(), count);
+				sleep(1);
+
+
+		count--;
+	}
 }
 
-void* foo2(void* arg)
-{
- //….
-   while(1)
-    {
-     printf("foo2\n");
-        sleep(1);
-    }
-return((void *)0);
-
-}
-void* foo3(void* arg)
-{
- //….
-    while(1)
-    {
-     printf("foo3\n");
-        sleep(1);
-    }
-return((void *)0);
-
-}
-//…
-
+/* 
+ * - TestCase1 tests a round-robin scheduling of thread  
+ * - Testing API scopes: thread_create
+ */
 void Testcase(void)
 {
-     thread_id tid1, tid2, tid3;
-     int  arg1, arg2, arg3;
-    // Ready_print_queue();
-    // Wait_print_queue();
+	thread_t tid[TOTAL_THREAD_NUM];
+	
+	thread_create(&tid[0], NULL, (void*)Tc1ThreadProc, (int*)1);
+	thread_create(&tid[1], NULL, (void*)Tc1ThreadProc, (int*)2);
+	thread_create(&tid[2], NULL, (void*)Tc1ThreadProc, (int*)3);
+	// thread_create(&tid[3], NULL, (void*)Tc1ThreadProc, (int*)4);
+	// thread_create(&tid[4], NULL, (void*)Tc1ThreadProc, (int*)5);
 
-     thread_create(&tid1, NULL, foo1, &arg1);
-	// sleep(2);
-	 //printf("tid test : %u",(unsigned int)tid1);
-     thread_create(&tid2, NULL, foo2, &arg2);
-     thread_create(&tid3, NULL, foo3, &arg3);
-     //…
-    //  printf("\n");
-    //  Ready_print_queue();
-    //  Wait_print_queue();
-
-//  printf("\n");
-//      Ready_print_queue();
-//      Wait_print_queue();
-     //thread_suspend(tid1);
-    //  thread_suspend(tid2);
-  
-    //  //…
-    //  thread_resume(tid1);
-    //  printf("\n");
-    //  Ready_print_queue();
-    //  Wait_print_queue();
-     
-     while(1);
+	while(1){}
+	
+	return ;
 }
+

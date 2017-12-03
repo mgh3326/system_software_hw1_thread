@@ -6,9 +6,9 @@
 #include<pthread.h>
 #include <unistd.h>
 #include <sys/types.h>
-
-#define TRUE true
-#define FALSE false
+int d=0;
+#define TRUE 1
+#define FALSE 0
 static pthread_cond_t bcond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t bmutex = PTHREAD_MUTEX_INITIALIZER;
 void (*old_fun)( int);
@@ -69,10 +69,32 @@ sleep(1);
 
 int 	thread_join(thread_t thread, void **retval)//이게 머지
 {
-    return pthread_join(thread,retval);
+  //Set thread status to sleep
+  //Remove this thread’s TCB from ready queue
+//insert TCB into waiting queue
+
+//Call __thread_wait_handler()
+
+  //   pthread_mutex_lock(&m);
+  //  while (done == 0)
+  //     pthread_cond_wait(&c, &m);
+  //  pthread_mutex_unlock(&m);
+//insert TCB into ready queue
+//Set thread status to ready
+//Get pExitCode of child’s TCB; Put pExitCode into retVal;
+//Remove child’s TCB from ready queue; deallocate child’s TCB
+//return
 }
 int thread_exit(void* retval)
 {
+  //Get parent’s TCB from this thread’s TCB
+  //Call __thread_wakeup using Parent TCB
+//set pExitCode of this thread’s TCP to exitValue
+
+//  pthread_mutex_lock(&m);
+//    while (done == 0)
+//       pthread_cond_wait(&c, &m);
+//    pthread_mutex_unlock(&m);
 
 }
 
@@ -103,24 +125,32 @@ void __thread_wait_handler(int signo)
    Thread* pTh;
       // __getThread()는 tid로 linked list의 TCB를 찾아서 반환한다.
    pTh = getThread(pthread_self());// child에서 TCB가 초기화 안되었는데, 이 함수가 호출되어도 되나 ?
+  // printf(" wait tid %u\n",pTh->tid);
    pthread_mutex_lock(&(pTh->readyMutex));
+     //         printf("__thread_wait_handler start %u\n",pTh->tid);
+
    while (pTh->bRunnable == FALSE)
       pthread_cond_wait(&(pTh->readyCond), &(pTh->readyMutex));
    pthread_mutex_unlock(&(pTh->readyMutex));
+   //printf("__thread_wait_handler end %u\n",pTh->tid);
 }
 void thread_wait(thread_t tid)
 {
   pthread_kill(tid, SIGUSR1);
-     printf("\nthread_wait\n");
+    // printf("\nthread_wait\n");
 
 }
 void __thread_wakeup(Thread* pTh)
 {
    pthread_mutex_lock(&(pTh->readyMutex));
    pTh->bRunnable = TRUE;
+           //printf("__thread_wakeup start%u\n",pTh->tid);
+
    pthread_cond_signal(&(pTh->readyCond));
    pthread_mutex_unlock(&(pTh->readyMutex));
-   printf("\n__thread_wakeup\n");
+              //printf("__thread_wakeup end%u\n",pTh->tid);
+
+   //printf("\n__thread_wakeup\n");
 }
 
 int Ready_enqueue(thread_t i)
@@ -131,6 +161,7 @@ int Ready_enqueue(thread_t i)
   //     fprintf(stderr, "IN: %s @ %d: Invalid Args\n", __FILE__, __LINE__);
   //     ret = 1;
   //   }
+  
   if(NULL == ReadyQHead && NULL == ReadyQTail)
     {
       struct _Thread* p = malloc(1 * sizeof *p);
@@ -477,8 +508,11 @@ void Wait_remove_element(struct _Thread* d)
  
   free(d);
 }
-thread_t Ready_peek()
+Thread* Ready_peek()
 {
-        struct _Thread* p= ReadyQHead;
-        return p->tid;
+      return ReadyQHead;
+}
+thread_t thread_head()
+{
+	return ReadyQHead->tid;
 }

@@ -41,10 +41,3 @@ void	_ContextSwitch(int curpid, int tpid)
 	currpid = tpid;	
 	list_head_remove_R();
 }
-
-
-
-
-
-
-

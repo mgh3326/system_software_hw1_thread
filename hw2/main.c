@@ -51,6 +51,7 @@ int main(void)
     RunScheduler();
      //여기부터 추가
      //printf("test\n");
+     while(1);
 }
 void* AppTask(void *arg)
 {

@@ -72,6 +72,7 @@ Thread* getThread_wait(thread_t i);
 void Wait_remove_element(struct _Thread* d);
 void __thread_wait_handler(int signo);
 void __thread_wakeup(Thread* pTh);
-thread_t Ready_peek();
+Thread* Ready_peek();
+thread_t thread_head();
 //여기 까지 추가
 #endif /* __THREAD_H__ */
