@@ -1,6 +1,7 @@
 #include "Init.h"
 #include "Scheduler.h"
 #include "Thread.h"
+#include "my.h"
 
 #include<stdio.h>
 #include<unistd.h>

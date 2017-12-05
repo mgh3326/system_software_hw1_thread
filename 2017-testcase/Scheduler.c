@@ -42,18 +42,22 @@ int RunScheduler( void )
         //sleep(2);
         //printf("ReadyQHead->tid : ,%u   test2 : %u\n",ReadyQHead->tid,getThread(ReadyQHead->tid)->tid);
         
-    run_tid=ReadyQHead->tid;
-    Running_Thread =p;
-    Running_Thread->tid=ReadyQHead->tid;
-    Running_Thread->parentTid = pthread_self();
-      Running_Thread->pPrev = Running_Thread->pNext = NULL;
-      Running_Thread->readyCond = ReadyQHead->readyCond;
-      Running_Thread->readyMutex = ReadyQHead->readyMutex;
-    Running_Thread->status=THREAD_STATUS_RUN;//status
-    Running_Thread->bRunnable =1;
-
+    // run_tid=ReadyQHead->tid;
+    // Running_Thread =p;
+    // Running_Thread->tid=ReadyQHead->tid;
+    // Running_Thread->parentTid = pthread_self();
+    //   Running_Thread->pPrev = Running_Thread->pNext = NULL;
+    //   Running_Thread->readyCond = ReadyQHead->readyCond;
+    //   Running_Thread->readyMutex = ReadyQHead->readyMutex;
+    // Running_Thread->status=THREAD_STATUS_RUN;//status
+    // Running_Thread->bRunnable =1;
+    
     //sleep(TIMESLICE);
+    //ReadyQHead->bRunnable=0;
     __thread_wakeup(ReadyQHead);//깨우고
+    ReadyQHead->status=THREAD_STATUS_RUN;
+    //Ready_print_queue();
+    
     sleep(TIMESLICE);
 
     //printf("tp->tid : %u\n",tp->tid);
@@ -67,30 +71,36 @@ int RunScheduler( void )
     //thread_wait(Running_Thread->tid);
       //pthread_kill(ReadyQHead->tid, SIGUSR1);
     //pthread_kill(Ready_peek()->tid, SIGUSR1);
-Running_Thread->tid=ReadyQHead->tid;
-    Running_Thread->parentTid = pthread_self();
-      Running_Thread->pPrev = Running_Thread->pNext = NULL;
-      Running_Thread->readyCond = ReadyQHead->readyCond;
-      Running_Thread->readyMutex = ReadyQHead->readyMutex;
-    Running_Thread->status=THREAD_STATUS_RUN;//status
-    Running_Thread->bRunnable =1;
+// Running_Thread->tid=ReadyQHead->tid;
+//     Running_Thread->parentTid = pthread_self();
+//       Running_Thread->pPrev = Running_Thread->pNext = NULL;
+//       Running_Thread->readyCond = ReadyQHead->readyCond;
+//       Running_Thread->readyMutex = ReadyQHead->readyMutex;
+//     Running_Thread->status=THREAD_STATUS_RUN;//status
+//     Running_Thread->bRunnable =1;
             //pthread_kill(Running_Thread->tid, SIGUSR1);//잠재우고
-
-            Ready_dequeue();
+            ReadyQHead->bRunnable=0;
             
+            Ready_dequeue();//자리를 바꿈
+            //printf("test : %d\n",ReadyQTail);
+
     ///Thread* rp =Ready_peek();
     //Ready_dequeue();
         //printf("run_tid : %u current_tid : %u \n",(unsigned int)Running_Thread->tid,(unsigned int)rp->tid);
         //pthread_kill(Running_Thread->tid, SIGUSR1);//잠재우고
 
-    Ready_enqueue(Running_Thread->tid);
-        //Running_Thread->bRunnable =0;
-        ReadyQTail->bRunnable=0;
+    //Ready_enqueue(Running_Thread->tid);
+        //ReadyQTail->bRunnable=0;
     //thread_create(Running_Thread->tid,NULL,NULL,NULL);
     // pthread_kill(Running_Thread->tid, SIGUSR1);//잠재우고
     // __thread_wakeup(Ready_peek());//깨우고
     
-    __ContextSwitch(Running_Thread,Ready_peek());
+    __ContextSwitch(ReadyQTail,ReadyQHead);
+    
+
+
+    //Ready_print_queue();
+    
     //Running_Thread->tid=Ready_peek()->tid;
     //__thread_wakeup(Running_Thread);
 
@@ -100,7 +110,16 @@ Running_Thread->tid=ReadyQHead->tid;
 }
 }
 void __ContextSwitch(Thread* pCurThread, Thread* pNewThread)
-{
-    pthread_kill(pCurThread->tid, SIGUSR1);
+{    //pCurThread->bRunnable=THREAD_STATUS_RUN;
+    
+    
+    //pNewThread->bRunnable=THREAD_STATUS_READY;
+    
     __thread_wakeup(pNewThread);
+    pthread_kill(pCurThread->tid, SIGUSR1);
+    pNewThread->status=THREAD_STATUS_RUN;
+    pCurThread->status=THREAD_STATUS_READY;
+    //pNewThread->bRunnable=THREAD_STATUS_RUN;
+    
+    
 }
