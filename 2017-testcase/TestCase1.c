@@ -9,15 +9,12 @@ void* Tc1ThreadProc(void* param)
            int* retVal;
  
            tid = thread_self();
- 	
-        //printf("param : %d\n",*param);
+ 
            count = 5;
            while (count > 0)
            {
                      /* sleep for 1 seconds */
                      sleep(2);
-                     		//printf("Tc1ThreadProc: my thread id (%u) count is (%d) arg: %d\n",(int)tid, count,param);
-
                      printf("Tc1ThreadProc: my thread id (%d), arg is (%d)\n", (int)tid,*((int*)param));
                      count--;
            }
@@ -34,11 +31,29 @@ void
 TestCase1(void)
 {
 	thread_t tid[TOTAL_THREAD_NUM];
-	thread_create(&tid[0], NULL, (void*)Tc1ThreadProc, (void*)1);
-	thread_create(&tid[1], NULL, (void*)Tc1ThreadProc, (void*)2);
-	thread_create(&tid[2], NULL, (void*)Tc1ThreadProc, (void*)3);
-	thread_create(&tid[3], NULL, (void*)Tc1ThreadProc, (void*)4);
-	thread_create(&tid[4], NULL, (void*)Tc1ThreadProc, (void*)5);
+	int i1 = 1, i2 = 2, i3 = 3, i4 = 4, i5 = 5;
+
+	thread_create(&tid[0], NULL, (void*)Tc1ThreadProc, (void*)&i1);
+	thread_create(&tid[1], NULL, (void*)Tc1ThreadProc, (void*)&i2);
+	thread_create(&tid[2], NULL, (void*)Tc1ThreadProc, (void*)&i3);
+	thread_create(&tid[3], NULL, (void*)Tc1ThreadProc, (void*)&i4);
+	thread_create(&tid[4], NULL, (void*)Tc1ThreadProc, (void*)&i5);
+// thread_suspend(tid[0]);
+// thread_suspend(tid[1]);
+// thread_suspend(tid[2]);
+// thread_suspend(tid[3]);
+// sleep(2);
+
+// thread_suspend(tid[4]);
+// sleep(2);
+// printf("test\n");
+
+// for(int i=0;i<5;i++)
+// {
+//     thread_resume(tid[i]);
+
+// }
+
 
 	while(1){}
 	

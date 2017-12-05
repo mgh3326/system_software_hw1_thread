@@ -14,34 +14,35 @@ static pthread_cond_t bcond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t bmutex = PTHREAD_MUTEX_INITIALIZER;
 void (*old_fun)( int);
 //extern int count;
-void *child(void *arg) {
-   printf("child\n");
-   return NULL;
+void child(int signo) {
+   printf("SIGUSR2\n");
+
 }
 
 void* __wrapperFunc(void* arg)
 {
-  WrapperArg* pArg = (WrapperArg*)arg;
-Ready_insert(thread_self(),pArg->funcArg);
+//printf("        test %d\n",(int)arg);
 //printf("ReadQ insert tid : %u\n",(unsigned int)thread_self());
-  
-  sigset_t set;
-  int retSig;
+
+  //sigset_t set;
+  //int retSig;
   // child sleeps until TCB is initialized
-     signal(SIGUSR1, __thread_wait_handler);//핸들러 등록
-     signal(SIGUSR2, __thread_wait_handler);//핸들러 등록
      
-  sigemptyset(&set);
-  sigaddset(&set, SIGUSR2);
-  sigwait(&set, &retSig);
+  //sigemptyset(&set);
+  //sigaddset(&set, SIGUSR2);
+  // sigwait(&set, &retSig);
   // child is ready to run
-  void* ret;
+  Ready_enqueue(thread_self());//arg를 나중에 받도록 해야겠다. (arg 입력용 함수 구현 필요)
   __thread_wait_handler(0);//다시 재움
+    WrapperArg* pArg = (WrapperArg*)arg;
+
   void* funcPtr = pArg->funcPtr;
   void* funcArg = pArg->funcArg;
-  
-  
-  ret = (*pArg->funcPtr)(&funcArg);
+         //if((pArg->funcArg)!=NULL)
+//printf("test : %d\n",*(int*)pArg->funcArg);
+    void* ret;
+
+  ret = (*pArg->funcPtr)(funcArg);
   
   return ret;
 
@@ -59,26 +60,38 @@ int 	thread_create(thread_t *thread, thread_attr_t *attr, void *(*start_routine)
    //  wrapperArg.funcPtr = start_routine;
   //  wrapperArg.funcArg = arg;//밑에꺼랑 무슨차이지
   //int count;
-    if(count>-1){
     WrapperArg* wrapperArg=(WrapperArg*)malloc(sizeof(WrapperArg));
-    
+
+         //if(arg!=NULL)
+         //printf("test : %d\n",*(int*)arg);
+
      wrapperArg->funcPtr = start_routine;
      wrapperArg->funcArg = arg;
+          signal(SIGUSR1, __thread_wait_handler);//핸들러 등록
+
     pthread_create(thread,attr,__wrapperFunc,wrapperArg);//제어의 새로운 흐름을 만듦
-  
+
                     // while(getThread(thread_self()) == NULL) {
                     //   //printf("not yet!\n");
                     //   }
-                    usleep(450000);//usleep(1000000) 이게 1초
-          pthread_kill(*thread,SIGUSR2);//보내주자
-  }
-   else if(count==0)
-   {
-    count++;    
-    pthread_create(thread,attr,start_routine,arg);//제어의 새로운 흐름을 만듦
-    //usleep(1000);//usleep(1000000) 이게 1초
-    //sleep(1);
-   }
+                //     usleep(390000);//usleep(1000000) 이게 1초
+
+                // pthread_kill(*thread,SIGUSR2);//보내주자
+                while(getThread(*thread)==NULL)
+                {
+                  usleep(1);
+                }
+          getThread(*thread)->parentTid=thread_self();
+                    getThread(*thread)->pExitCode=arg;
+     signal(SIGUSR2, child);//핸들러 등록
+
+  //  else if(count==0)
+  //  {
+  //   count++;    
+  //   pthread_create(thread,attr,start_routine,arg);//제어의 새로운 흐름을 만듦
+  //   //usleep(1000);//usleep(1000000) 이게 1초
+  //   //sleep(1);
+  //  }
 
            	//printf("\ntest test : %d\n",*thread);
              //count++;
@@ -86,8 +99,96 @@ int 	thread_create(thread_t *thread, thread_attr_t *attr, void *(*start_routine)
 
 
 int 	thread_join(thread_t thread, void **retval)//이게 머지
-{
+{		
+// Ready_print_queue();
+//     Wait_print_queue();
+  int ret;
   //Set thread status to sleep
+    //pthread_kill(thread, SIGUSR1);
+    Thread* cp=getThread(thread);
+    (*retval) = cp->pExitCode;
+        Thread* p= getThread(thread_self());
+
+        if(getThread(thread_self())!=NULL)
+        {
+          WaitQHead = WaitQTail = p;
+          WaitQHead->status=2;
+          p->status=2;
+
+          WaitQHead->bRunnable =0;
+        }
+    // Ready_dequeue();
+    //             ReadyQHead->bRunnable =1;
+
+   
+//       if(NULL == WaitQHead && NULL == WaitQTail)
+//             {
+
+//               WaitQHead = WaitQTail = p;
+             
+              
+//               WaitQHead->pNext=WaitQTail->pPrev=NULL;
+//   Ready_print_queue();
+//     Wait_print_queue();
+//                           //printf("ohoh : %d",WaitQTail->tid);
+
+
+//             WaitQHead->status=THREAD_STATUS_BLOCKED;
+//             WaitQHead->bRunnable =0;
+//             }
+// else if(NULL == WaitQHead || NULL == WaitQTail)
+//     {
+//       fprintf(stderr, "IN: %s @%d: Serious error.", __FILE__, __LINE__);
+//       fprintf(stderr,"List one of the list's ReadyQHead/pTail is null while other is not\n");
+//       ret = 1;
+//     }
+// else
+   
+//     {
+
+//       WaitQTail->pNext = p;
+//       p->pPrev = WaitQTail;
+//       WaitQTail = p;
+//        WaitQTail->pNext=NULL;
+
+//       WaitQTail->status=THREAD_STATUS_BLOCKED;
+//       WaitQTail->bRunnable =0;
+//       ret = 0;
+//     }
+
+    __thread_wait_handler(0);
+              Ready_remove_element(p);
+          WaitQHead->pNext=WaitQTail->pPrev=NULL;
+
+
+
+if(NULL == ReadyQHead && NULL == ReadyQTail)
+            {
+              Wait_remove_element(p);
+              ReadyQHead = ReadyQTail = p;
+            ReadyQHead->status=THREAD_STATUS_READY;
+            ReadyQHead->bRunnable =0;
+
+            }
+else if(NULL == ReadyQHead || NULL == ReadyQTail)
+    {
+      fprintf(stderr, "IN: %s @%d: Serious error.", __FILE__, __LINE__);
+      fprintf(stderr,"List one of the list's WaitQHead/pTail is null while other is not\n");
+      ret = 1;
+    }
+else
+   
+    {
+      
+      ReadyQTail->pNext = p;
+      p->pPrev = ReadyQTail;
+      ReadyQTail = p;
+      ReadyQTail->status=THREAD_STATUS_READY;
+      ReadyQTail->bRunnable =0;
+      ret = 0;
+    }
+      return ret;
+
   //Remove this thread’s TCB from ready queue
 //insert TCB into waiting queue
 
@@ -108,31 +209,102 @@ int thread_exit(void* retval)
   //Get parent’s TCB from this thread’s TCB
   //Call __thread_wakeup using Parent TCB
 //set pExitCode of this thread’s TCP to exitValue
+Thread* cp=getThread(thread_self());
+Thread* pp=getThread_wait(cp->parentTid);
+cp->status=THREAD_STATUS_ZOMBIE;
+cp->pExitCode=retval;
+      //if(getThread_wait((getThread(thread_self()))->parentTid))
+if(pp!=NULL)
+{
+      __thread_wakeup(pp);
+}
+ 
 
 //  pthread_mutex_lock(&m);
 //    while (done == 0)
 //       pthread_cond_wait(&c, &m);
 //    pthread_mutex_unlock(&m);
-  printf("스레드가 종료 되었습니다.%d\n",*((int*)retval));
+  //printf("스레드가 종료 되었습니다.%d\n",*((int*)retval));
 return 0;
 }
 
 int 	thread_suspend(thread_t tid)
 {
- 
-  if(getThread(tid)==NULL||getThread(tid)->bRunnable ==1)
-  return -1;
-  Ready_remove_element(getThread(tid));
-  printf(" thread_suspend(%u)\n",(unsigned int)tid);
-  Wait_enqueue(tid);
+
+
+  int ret;
+     Thread* p= getThread(tid);
+
+  // if(getThread(tid)==NULL||getThread(tid)->bRunnable ==1)
+  // return -1;
+  if(NULL == WaitQHead && NULL == WaitQTail)
+            {
+              Ready_remove_element( getThread(tid));
+              WaitQHead = WaitQTail = p;
+              p->pNext=p->pPrev=NULL;
+            WaitQHead->status=THREAD_STATUS_BLOCKED;
+            WaitQHead->bRunnable =0;
+
+            }
+else if(NULL == WaitQHead || NULL == WaitQTail)
+    {
+      fprintf(stderr, "IN: %s @%d: Serious error.", __FILE__, __LINE__);
+      fprintf(stderr,"List one of the list's ReadyQHead/pTail is null while other is not\n");
+      ret = 1;
+    }
+else
+    {
+
+      //p->pNext=p->pPrev=NULL;
+                    Ready_remove_element( getThread(tid));
+
+      WaitQTail->pNext = p;
+      p->pPrev = WaitQTail;
+      WaitQTail = p;
+       WaitQTail->pNext=NULL;
+      WaitQTail->status=THREAD_STATUS_BLOCKED;
+      WaitQTail->bRunnable =0;
+      ret = 0;
+
+    }
+    printf("suspend end\n");
 }
 
 
 int	thread_resume(thread_t tid)
 {
-  done=0;
-  Wait_remove_element(getThread_wait(tid));
-  Ready_enqueue(tid);
+   int ret;
+    Thread* p= getThread_wait(tid);
+  if(NULL == ReadyQHead && NULL == ReadyQTail)
+            {
+              Wait_remove_element(getThread_wait(tid));
+              ReadyQHead = ReadyQTail = p;
+                            p->pNext=p->pPrev=NULL;
+
+            ReadyQHead->status=THREAD_STATUS_READY;
+            ReadyQHead->bRunnable =0;
+
+            }
+else if(NULL == ReadyQHead || NULL == ReadyQTail)
+    {
+      fprintf(stderr, "IN: %s @%d: Serious error.", __FILE__, __LINE__);
+      fprintf(stderr,"List one of the list's WaitQHead/pTail is null while other is not\n");
+      ret = 1;
+    }
+else
+   
+    {
+                    Wait_remove_element(getThread_wait(tid));
+
+      ReadyQTail->pNext = p;
+      p->pPrev = ReadyQTail;
+      ReadyQTail = p;
+             ReadyQTail->pNext=NULL;
+
+      ReadyQTail->status=THREAD_STATUS_READY;
+      ReadyQTail->bRunnable =0;
+      ret = 0;
+    }
 }
 
 
@@ -143,9 +315,13 @@ thread_t	thread_self()
     return pthread_self();
 }
 
-//추가함
+//추가함`
 void __thread_wait_handler(int signo)
 {
+                  
+// Ready_print_queue();
+//     Wait_print_queue();
+
    Thread* pTh;
       // __getThread()는 tid로 linked list의 TCB를 찾아서 반환한다.
    pTh = getThread(pthread_self());// child에서 TCB가 초기화 안되었는데, 이 함수가 호출되어도 되나 ?
@@ -197,11 +373,11 @@ int Ready_insert(thread_t i,void* arg)
     {
       p->status=THREAD_STATUS_READY;//status
       p->tid = i;
-      p->parentTid = pthread_self();
+      //p->parentTid = pthread_self();
       p->pPrev = p->pNext = NULL;
       p->readyCond = bcond;
       p->readyMutex = bmutex;
-      p->pExitCode=arg;
+      //p->pExitCode=arg;
       ReadyQHead = ReadyQTail = p;
       ret = 0;
     }
@@ -223,13 +399,13 @@ int Ready_insert(thread_t i,void* arg)
       else
     {
       p->tid = i;
-      p->parentTid = pthread_self();
+      //p->parentTid = pthread_self();
 
       p->status=THREAD_STATUS_READY;//status
       p->pPrev = p->pNext = NULL;
       p->readyCond = bcond;
       p->readyMutex = bmutex;
-      p->pExitCode=arg;      
+      //p->pExitCode=arg;      
       ReadyQTail->pNext = p;
       p->pPrev = ReadyQTail;
       ReadyQTail = p;
@@ -260,7 +436,7 @@ int Ready_enqueue(thread_t i)
     {
       p->status=THREAD_STATUS_READY;//status
       p->tid = i;
-      p->parentTid = pthread_self();
+      //p->parentTid = pthread_self();
       p->pPrev = p->pNext = NULL;
       p->readyCond = bcond;
       p->readyMutex = bmutex;
@@ -285,7 +461,7 @@ int Ready_enqueue(thread_t i)
       else
     {
       p->tid = i;
-      p->parentTid = pthread_self();
+      //p->parentTid = pthread_self();
 
       p->status=THREAD_STATUS_READY;//status
       p->pPrev = p->pNext = NULL;
@@ -309,6 +485,7 @@ int Ready_dequeue()
   //     fprintf(stderr, "IN: %s @ %d: Invalid Args\n", __FILE__, __LINE__);
   //     ret = 1;
   //   }
+
   if(NULL == ReadyQHead && NULL == ReadyQTail)
     {
       printf("Nothing to Dequeue()\n");
@@ -373,9 +550,9 @@ void Ready_print_queue()
       printf("ReadyQoutput\n");      
       while(p)
     {
-      int* retVal=(int*)p->pExitCode;
+      // int* retVal=(int*)p->pExitCode;
       
-      printf("tid : %u parent id : %u status: %d exit code : %d\n", (unsigned int)p->tid,(unsigned int)p->parentTid,p->bRunnable,retVal);
+      printf("tid : %u parent id : %u bRunnable: %d status : %d\n", (unsigned int)p->tid,(unsigned int)p->parentTid,p->bRunnable,p->status);
       p = p->pNext;
     }
     
@@ -389,7 +566,7 @@ int Wait_enqueue(thread_t i)
   //     fprintf(stderr, "IN: %s @ %d: Invalid Args\n", __FILE__, __LINE__);
   //     ret = 1;
   //   }
-  if(NULL == WaitQHead && NULL == WaitQTai)
+  if(NULL == WaitQHead && NULL == WaitQTail)
     {
       struct _Thread* p = malloc(1 * sizeof *p);
       if(NULL == p)
@@ -406,11 +583,11 @@ int Wait_enqueue(thread_t i)
       p->readyCond = bcond;
       p->readyMutex = bmutex;
       p->bRunnable =2;
-      WaitQHead = WaitQTai = p;
+      WaitQHead = WaitQTail = p;
       ret = 0;
     }
     }
-  else if(NULL == WaitQHead || NULL == WaitQTai)
+  else if(NULL == WaitQHead || NULL == WaitQTail)
     {
       fprintf(stderr, "IN: %s @%d: Serious error.", __FILE__, __LINE__);
       fprintf(stderr,"List one of the list's ReadyQHead/pTail is null while other is not\n");
@@ -433,9 +610,9 @@ int Wait_enqueue(thread_t i)
       p->readyCond = bcond;
       p->readyMutex = bmutex;
       p->bRunnable =2;
-      WaitQTai->pNext = p;
-      p->pPrev = WaitQTai;
-      WaitQTai = p;
+      WaitQTail->pNext = p;
+      p->pPrev = WaitQTail;
+      WaitQTail = p;
       ret = 0;
     }
     }
@@ -451,12 +628,12 @@ int Wait_dequeue()
   //     fprintf(stderr, "IN: %s @ %d: Invalid Args\n", __FILE__, __LINE__);
   //     ret = 1;
   //   }
-  if(NULL == WaitQHead && NULL == WaitQTai)
+  if(NULL == WaitQHead && NULL == WaitQTail)
     {
       printf("Nothing to Dequeue()\n");
       ret = 0;
     }
-  else if(NULL == WaitQHead || NULL == WaitQTai)
+  else if(NULL == WaitQHead || NULL == WaitQTail)
     {
       fprintf(stderr, "IN: %s @%d: Serious error.", __FILE__, __LINE__);
       fprintf(stderr,"List one of the list's ReadyQHead/pTail is null while other is not\n");
@@ -465,9 +642,9 @@ int Wait_dequeue()
   else
     {
       struct _Thread* p = WaitQHead;
-      if(NULL == WaitQHead->pNext && NULL == WaitQTai->pNext) /* if last element */
+      if(NULL == WaitQHead->pNext && NULL == WaitQTail->pNext) /* if last element */
     {
-      WaitQHead = WaitQTai = NULL;
+      WaitQHead = WaitQTail = NULL;
     }
       else
     {
@@ -487,11 +664,11 @@ void Wait_print_queue()
   //   {
   //     fprintf(stderr, "IN: %s @ %d: Invalid Args\n", __FILE__, __LINE__);
   //    }
-  if(NULL == WaitQHead && NULL == WaitQTai)
+  if(NULL == WaitQHead && NULL == WaitQTail)
     {
       printf("Nothing to WaitQ\n");
     }
-  else if(NULL == WaitQHead || NULL == WaitQTai)
+  else if(NULL == WaitQHead || NULL == WaitQTail)
     {
       fprintf(stderr, "IN: %s @%d: Serious error.", __FILE__, __LINE__);
       fprintf(stderr,"List one of the list's ReadyQHead/pTail is null while other is not\n");
@@ -502,7 +679,7 @@ void Wait_print_queue()
       printf("WaitQoutput\n");      
       while(p)
     {
-      printf("tid : %u parent id : %u status: %d\n", (unsigned int)p->tid,(unsigned int)p->parentTid,p->status);
+      printf("tid : %u parent id : %u bRunnable: %d status : %d\n", (unsigned int)p->tid,(unsigned int)p->parentTid,p->bRunnable,p->status);
       p = p->pNext;
     }
     
@@ -512,7 +689,7 @@ Thread* getThread(thread_t i)
 {
     if(NULL == ReadyQHead && NULL == ReadyQTail)
     {
-      printf("Nothing to\n");
+      //printf("Nothing to\n");
       return NULL;
     }
   else if(NULL == ReadyQHead || NULL == ReadyQTail)
@@ -538,11 +715,11 @@ Thread* getThread(thread_t i)
 }
 Thread* getThread_wait(thread_t i)
 {
-    if(NULL == WaitQHead && NULL == WaitQTai)
+    if(NULL == WaitQHead && NULL == WaitQTail)
     {
       printf("Nothing to\n");
     }
-  else if(NULL == WaitQHead || NULL == WaitQTai)
+  else if(NULL == WaitQHead || NULL == WaitQTail)
     {
       fprintf(stderr, "IN: %s @%d: Serious error.", __FILE__, __LINE__);
       fprintf(stderr,"List one of the list's ReadyQHead/pTail is null while other is not\n");
@@ -563,10 +740,12 @@ Thread* getThread_wait(thread_t i)
     }
 }
 void Ready_remove_element(struct _Thread* d)
-{
-  if(NULL == d->pNext && (NULL == ReadyQHead->pNext && NULL == ReadyQHead->pNext)) /* only one element in queue */
+{      
+
+  if(NULL == d->pNext && (NULL == ReadyQHead->pNext && NULL == ReadyQTail->pNext)) /* only one element in queue */
     {
-      ReadyQHead = ReadyQHead = NULL;
+      
+      ReadyQHead = ReadyQTail = NULL;
     }
   else if((NULL == d->pNext) && d->pPrev) /* removing pTail */
     {
@@ -577,24 +756,26 @@ void Ready_remove_element(struct _Thread* d)
     {
       ReadyQHead = d->pNext;
       ReadyQHead->pPrev = NULL;
+      ReadyQHead->bRunnable=1;
     }
   else /* removing from center or somewhere */
     {
+      
       d->pPrev->pNext = d->pNext;
       d->pNext->pPrev = d->pPrev;
     }
  
-  free(d);
+  //free(d);
 }
 void Wait_remove_element(struct _Thread* d)
 {
-  if(NULL == d->pNext && (NULL == WaitQHead->pNext && NULL == WaitQHead->pNext)) /* only one element in queue */
+  if(NULL == d->pNext && (NULL == WaitQHead->pNext && NULL == WaitQTail->pNext)) /* only one element in queue */
     {
-      WaitQHead = WaitQHead = NULL;
+      WaitQHead = WaitQTail = NULL;
     }
   else if((NULL == d->pNext) && d->pPrev) /* removing pTail */
     {
-     WaitQHead = d->pPrev;
+     WaitQTail = d->pPrev;
       d->pPrev->pNext = NULL;
     }
   else if(d->pNext && (NULL == d->pPrev)) /* removing WaitQHead */
@@ -608,7 +789,7 @@ void Wait_remove_element(struct _Thread* d)
       d->pNext->pPrev = d->pPrev;
     }
  
-  free(d);
+  //free(d);
 }
 Thread* Ready_peek()
 {

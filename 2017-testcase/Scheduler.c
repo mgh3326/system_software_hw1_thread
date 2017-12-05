@@ -18,25 +18,30 @@ int RunScheduler( void )
     //                 sleep(TIMESLICE);
     // break;
     // }
-    struct _Thread* p = malloc(sizeof(Thread));
+    // struct _Thread* p = malloc(sizeof(Thread));
 
-    thread_t run_tid=0;
-    thread_t current_tid=0;
-        thread_t temp_tid=0;
+    // thread_t run_tid=0;
+    // thread_t current_tid=0;
+    //     thread_t temp_tid=0;
 
     int i=0;
-    Thread* tp;
+    // Thread* tp;
     while(1)
     {
+
 
     //레디큐가 비었는지 먼저 확인
     if(NULL == ReadyQHead && NULL == ReadyQTail)
     {
+
     sleep(TIMESLICE);
         continue;
     }
+
     if(i==0)
     {
+                sleep(TIMESLICE);
+
         //sleep(TIMESLICE);
         
         //sleep(2);
@@ -56,7 +61,6 @@ int RunScheduler( void )
     //ReadyQHead->bRunnable=0;
     __thread_wakeup(ReadyQHead);//깨우고
     ReadyQHead->status=THREAD_STATUS_RUN;
-    //Ready_print_queue();
     
     sleep(TIMESLICE);
 
@@ -66,7 +70,10 @@ int RunScheduler( void )
     //printf("test : %u\n",Running_Thread->tid);
         // run_tid=Ready_peek();
         // Thread* rp =getThread(run_tid);
-        
+
+
+       
+
         //printf("ReadyQHead->tid : ,%u   test2 : %u\n",ReadyQHead->tid,getThread(ReadyQHead->tid)->tid);
     //thread_wait(Running_Thread->tid);
       //pthread_kill(ReadyQHead->tid, SIGUSR1);
@@ -79,9 +86,12 @@ int RunScheduler( void )
 //     Running_Thread->status=THREAD_STATUS_RUN;//status
 //     Running_Thread->bRunnable =1;
             //pthread_kill(Running_Thread->tid, SIGUSR1);//잠재우고
-            ReadyQHead->bRunnable=0;
-            
+            //ReadyQHead->bRunnable=0;
+    			
+              ReadyQHead->bRunnable=0;
+
             Ready_dequeue();//자리를 바꿈
+
             //printf("test : %d\n",ReadyQTail);
 
     ///Thread* rp =Ready_peek();
@@ -94,17 +104,20 @@ int RunScheduler( void )
     //thread_create(Running_Thread->tid,NULL,NULL,NULL);
     // pthread_kill(Running_Thread->tid, SIGUSR1);//잠재우고
     // __thread_wakeup(Ready_peek());//깨우고
-    
+
     __ContextSwitch(ReadyQTail,ReadyQHead);
-    
+//if(ReadyQTail->status==THREAD_STATUS_ZOMBIE)
+        //Ready_remove_element(ReadyQTail);
 
 
-    //Ready_print_queue();
     
     //Running_Thread->tid=Ready_peek()->tid;
     //__thread_wakeup(Running_Thread);
-
+    Ready_print_queue();
+    Wait_print_queue();
     sleep(TIMESLICE);
+
+
           //pthread_kill(rp->tid, SIGUSR1);
 
 }
@@ -114,11 +127,25 @@ void __ContextSwitch(Thread* pCurThread, Thread* pNewThread)
     
     
     //pNewThread->bRunnable=THREAD_STATUS_READY;
+ 
+        if(pCurThread->status==THREAD_STATUS_BLOCKED)
+        {
+
+        Ready_remove_element(pCurThread);
+        //pCurThread->pPrev->pNext=NULL;
+
+    }
+    else{
+
     
     __thread_wakeup(pNewThread);
     pthread_kill(pCurThread->tid, SIGUSR1);
     pNewThread->status=THREAD_STATUS_RUN;
+        if(pCurThread->status==THREAD_STATUS_RUN)
+
+    if(pCurThread->status==THREAD_STATUS_RUN)
     pCurThread->status=THREAD_STATUS_READY;
+        }
     //pNewThread->bRunnable=THREAD_STATUS_RUN;
     
     
