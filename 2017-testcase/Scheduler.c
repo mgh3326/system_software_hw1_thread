@@ -113,8 +113,7 @@ int RunScheduler( void )
     
     //Running_Thread->tid=Ready_peek()->tid;
     //__thread_wakeup(Running_Thread);
-    Ready_print_queue();
-    Wait_print_queue();
+ 
 
     sleep(TIMESLICE);
 

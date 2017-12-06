@@ -105,20 +105,25 @@ int 	thread_join(thread_t thread, void **retval)//이게 머지
 // Ready_print_queue();
 //     Wait_print_queue();
   int ret;
+  
   //Set thread status to sleep
     //pthread_kill(thread, SIGUSR1);
     Thread* cp=getThread(thread);
     (*retval) = cp->pExitCode;
         Thread* p= getThread(thread_self());
+            __thread_wait_handler(0);
 
-        if(getThread(thread_self())!=NULL)
-        {
+        ReadyQHead=p->pNext;
+        p->pNext->pPrev=p->pPrev;
+        p->pPrev=p->pNext=NULL;
+ 
           WaitQHead = WaitQTail = p;
           WaitQHead->status=2;
           p->status=2;
 
           WaitQHead->bRunnable =0;
-        }
+        
+           
     // Ready_dequeue();
     //             ReadyQHead->bRunnable =1;
 
@@ -157,9 +162,8 @@ int 	thread_join(thread_t thread, void **retval)//이게 머지
 //       WaitQTail->bRunnable =0;
 //       ret = 0;
 //     }
+printf("test\n");
 
-    __thread_wait_handler(0);
-printf("        test1\n");
           //     Ready_remove_element(p);
           // WaitQHead->pNext=WaitQTail->pPrev=NULL;
         Thread* wp= WaitQHead;
@@ -174,12 +178,13 @@ printf("        test1\n");
       ReadyQTail = wp;
       ReadyQTail->pNext=NULL;
       ReadyQTail->status=THREAD_STATUS_READY;
+      
       //ReadyQTail->bRunnable =1;
                     //ReadyQTail->bRunnable=1;
-printf("        test2\n");
 
-      __thread_wakeup(ReadyQTail);
-      printf("        test3\n");
+
+      //__thread_wakeup(ReadyQTail);
+ 
     //   Ready_print_queue();
     // Wait_print_queue();
 // if(NULL == ReadyQHead && NULL == ReadyQTail)
@@ -238,13 +243,13 @@ cp->status=THREAD_STATUS_ZOMBIE;
 cp->pExitCode=retval;
 
       //if(getThread_wait((getThread(thread_self()))->parentTid))
-if(pp->tid==cp->parentTid)
+if(pp!=NULL)
 {
 
-
-      __thread_wakeup(pp);
-
-
+if(pp->status==THREAD_STATUS_BLOCKED)
+       {
+         __thread_wakeup(pp);
+       }
 }
 
 //  pthread_mutex_lock(&m);
@@ -744,6 +749,7 @@ Thread* getThread_wait(thread_t i)
 {
     if(NULL == WaitQHead && NULL == WaitQTail)
     {
+          return NULL;//실패?
       printf("Nothing to\n");
     }
   else if(NULL == WaitQHead || NULL == WaitQTail)
