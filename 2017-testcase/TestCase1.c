@@ -10,7 +10,7 @@ void* Tc1ThreadProc(void* param)
  
            tid = thread_self();
  
-           count = 5;
+           count = 2;
            while (count > 0)
            {
                      /* sleep for 1 seconds */

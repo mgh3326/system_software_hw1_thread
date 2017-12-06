@@ -115,6 +115,7 @@ int RunScheduler( void )
     //__thread_wakeup(Running_Thread);
     Ready_print_queue();
     Wait_print_queue();
+
     sleep(TIMESLICE);
 
 
@@ -124,7 +125,14 @@ int RunScheduler( void )
 }
 void __ContextSwitch(Thread* pCurThread, Thread* pNewThread)
 {    //pCurThread->bRunnable=THREAD_STATUS_RUN;
-    
+    if(pCurThread==NULL||pNewThread==NULL)
+    {
+                    // pthread_kill(pCurThread->tid, SIGUSR2);
+
+        		sleep(2);
+
+        return;
+    }
     
     //pNewThread->bRunnable=THREAD_STATUS_READY;
  
@@ -139,6 +147,15 @@ void __ContextSwitch(Thread* pCurThread, Thread* pNewThread)
 
     
     __thread_wakeup(pNewThread);
+    if(pCurThread==NULL||pNewThread==NULL)
+    {
+            // pthread_kill(pCurThread->tid, SIGUSR2);
+
+        		sleep(2);
+
+        return;
+    }
+    
     pthread_kill(pCurThread->tid, SIGUSR1);
     pNewThread->status=THREAD_STATUS_RUN;
         if(pCurThread->status==THREAD_STATUS_RUN)

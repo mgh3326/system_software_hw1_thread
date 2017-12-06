@@ -66,7 +66,6 @@ TestCase3(void)
 	{
 		
 		sleep(2);
-				printf("		test\n");
 
 		if(thread_resume(tid[i])==-1)
 		{
