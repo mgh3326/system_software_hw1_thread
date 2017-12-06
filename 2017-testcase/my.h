@@ -27,12 +27,16 @@ Thread* getThread(thread_t i);
 void Ready_remove_element(struct _Thread* d);
 Thread* getThread_wait(thread_t i);
 void Wait_remove_element(struct _Thread* d);
+void Wait_delete_element(struct _Thread *d);
+void Ready_delete_element(struct _Thread *d);
 void __thread_wait_handler(int signo);
 void __thread_wakeup(Thread* pTh);
 Thread* Ready_peek();
 thread_t thread_head();
 //여기 까지 추가
-extern int count; 
-int Ready_insert(thread_t i,void* arg);
-
+extern int count;
+int Ready_insert(thread_t i, void* arg);
+pthread_cond_t run_wait;
+int sign; //avail=0;phylo=1;pyDE=2
+pthread_mutex_t run_lock;
 #endif /* __MY_H__ */
